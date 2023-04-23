@@ -8,19 +8,22 @@
 # @Email  : chenyuwuxinn@gmail.com, zhlin@ruc.edu.cn, houyupeng@ruc.edu.cn, chenyushuo@ruc.edu.cn, slmu@ruc.edu.cn, panxy@ruc.edu.cn
 
 # UPDATE:
-# @Time   : 2020/10/8, 2020/10/15, 2020/11/20, 2021/2/20, 2021/3/3, 2021/3/5, 2021/7/18, 2022/7/11, 2023/2/11
-# @Author : Hui Wang, Xinyan Fan, Chen Yang, Yibo Li, Lanling Xu, Haoran Cheng, Zhichao Feng, Lei Wang, Gaowei Zhang
-# @Email  : hui.wang@ruc.edu.cn, xinyan.fan@ruc.edu.cn, 254170321@qq.com, 2018202152@ruc.edu.cn, xulanling_sherry@163.com, chenghaoran29@foxmail.com, fzcbupt@gmail.com, zxcptss@gmail.com, zgw2022101006@ruc.edu.cn
+# @Time   : 2020/10/8, 2020/10/15, 2020/11/20, 2021/2/20, 2021/3/3, 2021/3/5, 2021/7/18, 2022/7/11
+# @Author : Hui Wang, Xinyan Fan, Chen Yang, Yibo Li, Lanling Xu, Haoran Cheng, Zhichao Feng, Lei Wang
+# @Email  : hui.wang@ruc.edu.cn, xinyan.fan@ruc.edu.cn, 254170321@qq.com, 2018202152@ruc.edu.cn, xulanling_sherry@163.com, chenghaoran29@foxmail.com, fzcbupt@gmail.com, zxcptss@gmail.com
 
 r"""
 recbole.trainer.trainer
 ################################
 """
 
+from modulefinder import Module
 import os
 
 from logging import getLogger
+from pickletools import optimize
 from time import time
+from turtle import forward
 
 import numpy as np
 import torch
@@ -43,7 +46,7 @@ from recbole.utils import (
     get_tensorboard,
     set_color,
     get_gpu_usage,
-    WandbLogger,
+    WandbLogger,MLFlowLogger
 )
 from torch.nn.parallel import DistributedDataParallel
 
@@ -114,6 +117,7 @@ class Trainer(AbstractTrainer):
         self.logger = getLogger()
         self.tensorboard = get_tensorboard(self.logger)
         self.wandblogger = WandbLogger(config)
+        self.mlflowlogger = MLFlowLogger(config)
         self.learner = config["learner"]
         self.learning_rate = config["learning_rate"]
         self.epochs = config["epochs"]
@@ -267,7 +271,7 @@ class Trainer(AbstractTrainer):
                 )
         return total_loss
 
-    def _valid_epoch(self, valid_data, show_progress=False):
+    def _valid_epoch(self, valid_data, show_progress=False,step = 0):
         r"""Valid the model with valid data
 
         Args:
@@ -279,7 +283,7 @@ class Trainer(AbstractTrainer):
             dict: valid result
         """
         valid_result = self.evaluate(
-            valid_data, load_best_model=False, show_progress=show_progress
+            valid_data, load_best_model=False, show_progress=show_progress,step = step
         )
         valid_score = calculate_valid_score(valid_result, self.valid_metric)
         return valid_score, valid_result
@@ -451,6 +455,10 @@ class Trainer(AbstractTrainer):
                 {"epoch": epoch_idx, "train_loss": train_loss, "train_step": epoch_idx},
                 head="train",
             )
+            self.mlflowlogger.log_metrics(
+                {"epoch": epoch_idx, "train_loss": train_loss, "train_step": epoch_idx},
+                head="train",
+            )
 
             # eval
             if self.eval_step <= 0 or not valid_data:
@@ -460,9 +468,8 @@ class Trainer(AbstractTrainer):
             if (epoch_idx + 1) % self.eval_step == 0:
                 valid_start_time = time()
                 valid_score, valid_result = self._valid_epoch(
-                    valid_data, show_progress=show_progress
+                    valid_data, show_progress=show_progress,step = epoch_idx
                 )
-
                 (
                     self.best_valid_score,
                     self.cur_step,
@@ -492,6 +499,9 @@ class Trainer(AbstractTrainer):
                     self.logger.info(valid_result_output)
                 self.tensorboard.add_scalar("Vaild_score", valid_score, epoch_idx)
                 self.wandblogger.log_metrics(
+                    {**valid_result, "valid_step": valid_step}, head="valid"
+                )
+                self.mlflowlogger.log_metrics(
                     {**valid_result, "valid_step": valid_step}, head="valid"
                 )
 
@@ -558,7 +568,7 @@ class Trainer(AbstractTrainer):
 
     @torch.no_grad()
     def evaluate(
-        self, eval_data, load_best_model=True, model_file=None, show_progress=False
+        self, eval_data, load_best_model=True, model_file=None, show_progress=False,step = 0
     ):
         r"""Evaluate the model based on the eval data.
 
@@ -625,6 +635,7 @@ class Trainer(AbstractTrainer):
         if not self.config["single_spec"]:
             result = self._map_reduce(result, num_sample)
         self.wandblogger.log_eval_metrics(result, head="eval")
+        self.mlflowlogger.log_eval_metrics(result, head="eval",step = step)
         return result
 
     def _map_reduce(self, result, num_sample):
@@ -1335,6 +1346,7 @@ class NCLTrainer(Trainer):
         self.eval_collector.data_collect(train_data)
 
         for epoch_idx in range(self.start_epoch, self.epochs):
+
             # only differences from the original trainer
             if epoch_idx % self.num_m_step == 0:
                 self.logger.info("Running E-step ! ")
@@ -1371,7 +1383,6 @@ class NCLTrainer(Trainer):
                 valid_score, valid_result = self._valid_epoch(
                     valid_data, show_progress=show_progress
                 )
-
                 (
                     self.best_valid_score,
                     self.cur_step,

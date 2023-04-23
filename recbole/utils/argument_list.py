@@ -7,7 +7,7 @@
 general_arguments = [
     'gpu_id', 'use_gpu',
     'seed',
-    'reproducibility',
+    'reproducibilxqity',
     'state',
     'data_path',
     'checkpoint_dir',
@@ -17,7 +17,7 @@ general_arguments = [
     'dataset_save_path',
     'save_dataloaders',
     'dataloaders_save_path',
-    'log_wandb',
+    'log_wandb','log_mlflow',
 ]
 
 training_arguments = [

@@ -17,6 +17,7 @@ from recbole.utils.utils import (
 from recbole.utils.enum_type import *
 from recbole.utils.argument_list import *
 from recbole.utils.wandblogger import WandbLogger
+from recbole.utils.mlflowlogger import MLFlowLogger
 
 __all__ = [
     "init_logger",
@@ -46,4 +47,5 @@ __all__ = [
     "get_environment",
     "list_to_latex",
     "WandbLogger",
+    "MLFlowLogger"
 ]
