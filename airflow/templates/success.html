@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>API Key Display</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+			background-color: #f5f5f5;
+		}
+		.container {
+			max-width: 600px;
+			margin: 0 auto;
+			padding: 20px;
+			background-color: #fff;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			border-radius: 5px;
+		}
+		h1 {
+			font-size: 36px;
+			margin: 0 0 20px;
+		}
+		p {
+			font-size: 18px;
+			margin: 0 0 10px;
+		}
+		.api-key {
+			display: inline-block;
+			padding: 10px;
+			margin-bottom: 10px;
+			background-color: #eee;
+			border: 2px solid #ccc;
+			border-radius: 5px;
+		}
+		button {
+			font-size: 16px;
+			padding: 10px 20px;
+			background-color: #4CAF50;
+			color: #fff;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+		button:hover {
+			background-color: #3e8e41;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>API Key Display</h1>
+		<p>Here's your API key:</p>
+		<div class="api-key">
+			 <span id="api-key-value">{{ api_key }}</span>
+		</div>
+		<button onclick="copyToClipboard('{{ api_key }}')">Copy to Clipboard</button>
+	</div>
+	
+	<script>
+		function copyToClipboard(apiKey) {
+			var range = document.createRange();
+			var apiKeyValue = document.getElementById("api-key-value");
+			range.selectNode(apiKeyValue);
+			window.getSelection().removeAllRanges();
+			window.getSelection().addRange(range);
+			document.execCommand("copy");
+			window.getSelection().removeAllRanges();
+			alert("API key copied to clipboard!");
+		}
+	</script>
+</body>
+</html>
