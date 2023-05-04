@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My API Page</title>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      h1 {
+        color: #333;
+      }
+      .api-key {
+        border: 1px solid #ddd;
+        padding: 10px;
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        border-radius: 4px;
+      }
+      .copy-btn {
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .copy-btn:hover {
+        background-color: #3e8e41;
+      }
+    </style>
+    <script>
+      function copyToClipboard() {
+        var copyText = document.getElementById("api-key");
+        copyText.select();
+        document.execCommand("copy");
+      }
+    </script>
+  </head>
+  <body>
+    <h1>API Key:</h1>
+    <div class="api-key">
+      <input type="text" value="{{ api_key }}" id="api-key" readonly>
+    </div>
+    <button class="copy-btn" onclick="copyToClipboard()">Copy</button>
+  </body>
+</html>

@@ -55,6 +55,7 @@ def create_dataset(config):
     default_file = os.path.join(
         config["checkpoint_dir"], f'{config["dataset"]}-{dataset_class.__name__}.pth'
     )
+   # import pdb;pdb.set_trace()
     file = config["dataset_save_path"] or default_file
     if os.path.exists(file):
         with open(file, "rb") as f:

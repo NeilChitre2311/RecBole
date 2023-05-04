@@ -43,7 +43,6 @@ if __name__ == "__main__":
     config_file_list = (
         args.config_files.strip().split(" ") if args.config_files else None
     )
-    import pdb;pdb.set_trace()
 
     if args.nproc == 1 and args.world_size <= 0:
         run_recbole(
